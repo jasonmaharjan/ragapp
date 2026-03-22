@@ -6,11 +6,10 @@ test_chunks = [
     "Hello world",
     "This is a RAG pipeline",
     "This is a garbage text",
+    "Random Text",
     "This is a 'RAG' garbage text",
 ]
 embeddings = [get_embedding(chunk) for chunk in test_chunks]
-
-print(embeddings)
 
 add_documents(test_chunks, embeddings)
 
@@ -18,5 +17,5 @@ add_documents(test_chunks, embeddings)
 query_emb = get_embedding("What do you do in RAG??")
 res = query_db(query_emb)
 
-print("Here you go\n")
+print("Results: ")
 print(res["documents"][0])

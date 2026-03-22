@@ -1,25 +1,17 @@
-from chromadb.config import Settings
 import chromadb
 import os
 
 PERSIST_DIR = os.path.join(os.path.dirname(__file__), "../chroma_db")
 
-client = chromadb.Client(
-    Settings(
-        chroma_db_impl="duckdb+parquet",  # this is the persistent storage engine
-        persist_directory=PERSIST_DIR,
-    )
-)
+client = chromadb.Client()
 
 collection = client.get_or_create_collection(name="docs")
-
 
 # add documents along with their embeddings to Chroma
 # give unique ID to each chunk
 def add_documents(chunks, embeddings):
     ids = [str(i) for i in range(len(chunks))]
     collection.add(documents=chunks, embeddings=embeddings, ids=ids)
-    client.persist()  # Save to disk
 
 
 # retrieve the top "k" similar documents
