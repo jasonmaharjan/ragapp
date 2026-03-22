@@ -6,3 +6,6 @@ install:
 
 run:
 	cd server && uvicorn main:app --reload
+
+test:
+	cd server && python test.py
