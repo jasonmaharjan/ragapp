@@ -1,3 +1,7 @@
+import os
+# allow the cached model to be used (Offline mode)
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+
 from embedder import get_embedding
 from vector_db import add_documents, query_db
 

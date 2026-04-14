@@ -2,3 +2,7 @@ venv/
 __pycache__/
 *.pyc
 .env
+# Hugging Face cache
+.cache/
+models/
+hf_cache/
