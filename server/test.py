@@ -55,4 +55,26 @@ assert doc_chunks[-1].source == tmp.name
 print(f"  Correctly attached temporary source filename to chunks: {doc_chunks[0].source}")
 print("  PASS\n")
 
+
+# 4. Hybrid Search (vector + BM25)
+print("---- 4. Hybrid Search (vector + BM25) ----")
+test_docs = [
+    "HELLO WORLD! This is a test document.",
+    "Python is a popular programming language for machine learning.",
+    "RAG combines retrieval with generation to reduce hallucinations.",
+    "BM25 is a classic keyword-based ranking function used in search engines.",
+]
+metas = [{"source": "test.txt", "chunk_index": i} for i in range(len(test_docs))]
+embeddings = [get_embedding(doc) for doc in test_docs]
+add_documents(test_docs, embeddings, metas)
+
+results = query_db("How does RAG work?", get_embedding("How does RAG work?"), k=3)
+print(f"  Top {len(results)} results:")
+for r in results:
+    print(f"    score={r['score']}  {r['text'][:60]!r}")
+assert len(results) == 3, f"Expected 3 results, got {len(results)}"
+assert any("RAG" in r["text"] for r in results), "Expected RAG chunk in top results"
+print("  PASS\n")
+
+
 print("All tests passed.")
