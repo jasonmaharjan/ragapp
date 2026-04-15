@@ -42,8 +42,10 @@ print("  PASS\n")
 print("---- 3. Ingestion (TXT) ----") 
 import tempfile, pathlib
 
-tmp = pathlib.Path(tempfile.mktemp(suffix=".txt"))
-tmp.write_text(sample_text, encoding="utf-8")
+with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as f:
+    f.write(sample_text.encode("utf-8"))
+    tmp = pathlib.Path(f.name)
+
 doc_chunks = ingest_document(str(tmp), max_chars=100, overlap_chars=50)
 tmp.unlink()
 
@@ -108,5 +110,27 @@ except Exception:
     print("  Redis not running — graceful degradation test only")
 
 print("  PASS\n")
+
+
+# 6. Query pipeline (retrieve + source attribution)
+print("---- 6. Query Pipeline ----")
+from query import retrieve, run_query
+
+# retrieve() returns ranked chunks with attribution fields
+hits = retrieve("How does RAG work?", k=3)
+print(f"  retrieve() returned {len(hits)} chunks")
+for h in hits:
+    print(f"    score={h['score']}  source={h['source']!r}  chunk={h['chunk_index']}")
+    assert "text" in h and "source" in h and "chunk_index" in h and "score" in h
+assert len(hits) > 0, "Expected at least one result"
+
+# run_query() retrieves with cache check
+result = run_query("How does RAG work?", k=3)
+assert "sources" in result and "cached" in result and "answer" in result
+assert result["cached"] is False  # Redis not running in test env
+assert len(result["sources"]) > 0
+print(f"  run_query() cached={result['cached']}, sources={len(result['sources'])}")
+print("  PASS\n")
+
 
 print("All tests passed.")

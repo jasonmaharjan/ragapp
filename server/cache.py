@@ -28,7 +28,6 @@ def get_cached(query: str) -> dict | None:
     """Return ``{"answer": ..., "sources": [...]}`` for *query*, or ``None`` on miss."""
     try:
         raw = _get_client().get(cache_key(query))
-        print(raw)
         return json.loads(raw) if raw else None
     except (redis_lib.RedisError, json.JSONDecodeError):
         print(f"Get Cache error for query {query!r}:")

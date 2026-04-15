@@ -38,3 +38,39 @@ make test
 Redis survives restarts, is shared across multiple API workers, and gives us TTL expiry for free so stale answers eventually purge themselves.
 
 The query text is normalised before hashing so variations like extra whitespace or capitalisation still hit the same cache entry. SHA-256 is chosen as the collision-free, fixed-width key in Redis to avoid having to store raw user input data.
+
+## Query pipeline
+
+Each request runs through the following steps:
+
+1. **Cache check** — Redis lookup on the normalised query. Cache hit returns immediately with zero embedding, retrieval, or LLM cost.
+
+2. **Embed** — query text is converted to a 384-dim vector via sentence-transformers.
+
+3. **Hybrid retrieval** — BM25 + vector search, fused and ranked.
+
+4. **Source attribution** — every returned chunk includes its source filename, chunk index, and hybrid score so the caller knows exactly which part of which document the result came from.
+
+## Source attribution
+
+The `/query` endpoint returns each chunk with the following schema:
+
+```json
+{
+  "text": ".......",
+  "source": "filename.pdf",
+  "chunk_index": 3,
+  "score": 0.521
+}
+```
+
+This makes it possible to cite sources in the answer and prevent hallucination.
+
+## API
+
+`GET`
+- `/` : Health check
+`POST`
+- `/ingest` : Upload a document with the supported extensions: PDF / DOCX / TXT / MD
+`POST`
+- `/query` : Ask a question and get the top-k chunks with source attribution
