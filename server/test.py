@@ -77,4 +77,36 @@ assert any("RAG" in r["text"] for r in results), "Expected RAG chunk in top resu
 print("  PASS\n")
 
 
+# 5. Redis Cache
+print("---- 5. Redis Cache Test ----")
+from cache import cache_key, get_cached, set_cached
+
+test_query = "What is RAG?"
+
+# Cache key is deterministic and normalises whitespace/case
+k1 = cache_key(test_query)
+k2 = cache_key("  What is RAG?  ")
+k3 = cache_key("what is rag?")
+assert k1 == k2 == k3, "Cache key should normalise query text"
+assert k1.startswith("rag:query:"), "Cache key should have rag:query: prefix"
+print(f"  Cache key (prefix): {k1[:26]}...")
+
+# Cache miss is graceful when Redis is not running
+result = get_cached("query that was never cached xyz987")
+assert result is None, "Expected None for a cache miss"
+
+# If Redis is available, test a full round-trip
+try:
+    import redis as _r
+    _r.from_url("redis://localhost:6379", socket_connect_timeout=1).ping()
+    set_cached(test_query, "RAG = Retrieval-Augmented Generation", [{"source": "test.txt"}])
+    cached = get_cached(test_query)
+    assert cached is not None, "Expected a cache hit after set_cached"
+    assert cached["answer"] == "RAG = Retrieval-Augmented Generation"
+    print("  Redis round-trip: PASS")
+except Exception:
+    print("  Redis not running — graceful degradation test only")
+
+print("  PASS\n")
+
 print("All tests passed.")

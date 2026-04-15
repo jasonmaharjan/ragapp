@@ -32,3 +32,9 @@ make install
 make run      
 make test     
 ```
+
+## Redis query caching
+
+Redis survives restarts, is shared across multiple API workers, and gives us TTL expiry for free so stale answers eventually purge themselves.
+
+The query text is normalised before hashing so variations like extra whitespace or capitalisation still hit the same cache entry. SHA-256 is chosen as the collision-free, fixed-width key in Redis to avoid having to store raw user input data.
