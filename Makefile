@@ -9,3 +9,6 @@ run:
 
 test:
 	cd server && python test.py
+
+eval:
+	python scripts/eval.py

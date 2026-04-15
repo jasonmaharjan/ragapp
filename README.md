@@ -66,6 +66,23 @@ The `/query` endpoint returns each chunk with the following schema:
 
 This makes it possible to cite sources in the answer and prevent hallucination.
 
+## Retrieval evaluation
+
+Execution of `scripts/eval.py` calculates how well the hybrid search retrieves relevant chunks according to four metrics:
+
+**Precision@k** : Of the top-k results, what fraction are relevant? 
+**Recall@k** : Of all relevant chunks, what fraction appear in top-k? 
+**MRR** : Mean Reciprocal Rank — how high does the first correct result appear?
+**NDCG@k** : Normalised Discounted Cumulative Gain. Similar to P@k but penalises relevant results at rank k vs rank 1.
+
+Using these metrics, we can tune `alpha` — the BM25/vector blend ratio. A higher alpha gives weightage to semantic search; lower gives weightage to keyword matching.
+
+Run the built-in smoke test (corpus included, no external data needed):
+
+```bash
+python scripts/eval.py
+```
+
 ## API
 
 `GET`
