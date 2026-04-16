@@ -1,22 +1,35 @@
 import os
 import tempfile
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, UploadFile
 from pydantic import BaseModel
 
+from db import get_history, init_db
 from embedder import get_embedding
 from ingestion import SUPPORTED_EXTENSIONS, ingest_document
 from query import run_query
 from vector_db import add_documents
 
-app = FastAPI(title="RAG API")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    try:
+        init_db()
+    except Exception:
+        pass  # Postgres not required — graceful degradation
+    yield
+
+
+app = FastAPI(title="RAG API", lifespan=lifespan)
 
 
 class QueryRequest(BaseModel):
     query: str
     k: int = 5
     alpha: float = 0.5
+    session_id: str | None = None
 
 
 @app.get("/")
@@ -48,4 +61,9 @@ async def ingest(file: UploadFile):
 
 @app.post("/query")
 async def query(request: QueryRequest):
-    return run_query(request.query, k=request.k, alpha=request.alpha)
+    return run_query(request.query, k=request.k, alpha=request.alpha, session_id=request.session_id)
+
+
+@app.get("/history/{session_id}")
+def history(session_id: str):
+    return {"session_id": session_id, "history": get_history(session_id)}

@@ -133,4 +133,37 @@ print(f"  run_query() cached={result['cached']}, sources={len(result['sources'])
 print("  PASS\n")
 
 
+# 7. PostgreSQL conversation history
+print("---- 7. PostgreSQL Conversation History ----")
+from db import get_history, init_db, save_query
+
+# init_db() is a no-op when Postgres is not running (graceful degradation)
+try:
+    import psycopg2
+    psycopg2.connect("postgresql://ragapp:ragapp@localhost:5432/ragapp", connect_timeout=1).close()
+    postgres_available = True
+except Exception:
+    postgres_available = False
+
+if postgres_available:
+    init_db()
+
+    session = "test-session-001"
+    save_query(session, "What is RAG?", "RAG is Retrieval-Augmented Generation.", [{"source": "test.txt"}], False)
+    save_query(session, "What is BM25?", "BM25 is a keyword ranking function.", [{"source": "test.txt"}], False)
+
+    rows = get_history(session)
+    assert len(rows) >= 2, f"Expected at least 2 history rows, got {len(rows)}"
+    assert rows[0]["query"] == "What is RAG?"
+    assert rows[1]["query"] == "What is BM25?"
+    assert isinstance(rows[0]["sources"], list)
+    print(f"  Saved and retrieved {len(rows)} history rows for session {session!r}")
+    print("  PASS\n")
+else:
+    print("  Postgres not running — graceful degradation test only")
+    history = get_history("nonexistent-session")
+    assert history == [], "Expected empty list when Postgres is unavailable"
+    print("  PASS\n")
+
+
 print("All tests passed.")

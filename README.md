@@ -83,11 +83,40 @@ Run the built-in smoke test (corpus included, no external data needed):
 python scripts/eval.py
 ```
 
+## Conversation history
+
+Each query can be associated with a `session_id`. When provided, the query and its retrieved sources are persisted to PostgreSQL so you can retrieve the full history for a session later.
+
+The session ID is caller-defined — any string works (UUID, username, etc.). If omitted, the query still runs but nothing is saved.
+
+Both Redis and Postgres degrade gracefully: the API functions normally if either service is unavailable.
+
+## Running with Docker
+
+```bash
+cp .env.example .env   # fill in ANTHROPIC_API_KEY
+docker compose up
+```
+
+This starts the API on port 8000, Redis on 6379, and Postgres on 5432. The API creates the `query_history` table on startup.
+
 ## API
 
 `GET`
 - `/` : Health check
+- `/history/{session_id}` : Return all queries for a session, oldest first
+
 `POST`
-- `/ingest` : Upload a document with the supported extensions: PDF / DOCX / TXT / MD
-`POST`
-- `/query` : Ask a question and get the top-k chunks with source attribution
+- `/ingest` : Upload a document (PDF / DOCX / TXT / MD)
+- `/query` : Ask a question — returns top-k chunks with source attribution
+
+Optional `session_id` in the query request body saves the query to conversation history:
+
+```json
+{
+  "query": "What is RAG?",
+  "k": 5,
+  "alpha": 0.5,
+  "session_id": "user-abc"
+}
+```
