@@ -65,8 +65,7 @@ def save_query(
             conn.commit()
         finally:
             _get_pool().putconn(conn)
-    except Exception as e:
-        print("Error saving query:", e)
+    except Exception:
         pass
 
 
@@ -89,6 +88,5 @@ def get_history(session_id: str) -> list[dict]:
                 return [dict(r) for r in rows]
         finally:
             _get_pool().putconn(conn)
-    except Exception as e:
-        print("Error fetching query history:", e)
+    except Exception:
         return []
