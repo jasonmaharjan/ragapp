@@ -12,3 +12,6 @@ test:
 
 eval:
 	python scripts/eval.py
+
+setup-db:
+	psql -U postgres -f scripts/setup_db.sql

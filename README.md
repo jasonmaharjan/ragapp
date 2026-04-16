@@ -91,6 +91,15 @@ The session ID is caller-defined — any string works (UUID, username, etc.). If
 
 Both Redis and Postgres degrade gracefully: the API functions normally if either service is unavailable.
 
+## Local Setup
+
+```bash
+make install
+make setup-db   # creates ragapp user and database using postgres superuser
+make run
+make test
+```
+
 ## Running with Docker
 
 ```bash
@@ -98,7 +107,7 @@ cp .env.example .env   # fill in ANTHROPIC_API_KEY
 docker compose up
 ```
 
-This starts the API on port 8000, Redis on 6379, and Postgres on 5432. The API creates the `query_history` table on startup.
+This starts the API on port 8000, Redis on 6379, and Postgres on 5432. The Postgres user and database are created automatically from the credentials in `docker-compose.yml`. The API creates the `query_history` table on startup.
 
 ## API
 
