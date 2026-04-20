@@ -1,4 +1,7 @@
-from cache import get_cached
+import os
+
+from cache import get_cached, set_cached
+from claude_client import stream_answer
 from db import save_query
 from embedder import get_embedding
 from vector_db import query_db
@@ -23,7 +26,7 @@ def run_query(
     alpha: float = 0.5,
     session_id: str | None = None,
 ) -> dict:
-    """Full retrieval pipeline with cache check. Persists to DB if session_id given."""
+    """Full retrieval pipeline: cache check → retrieve → generate → cache + persist."""
     cached_result = get_cached(query_text)
     if cached_result:
         result = {**cached_result, "query": query_text, "cached": True}
@@ -32,7 +35,13 @@ def run_query(
         return result
 
     sources = retrieve(query_text, k=k, alpha=alpha)
-    result = {"query": query_text, "sources": sources, "cached": False, "answer": ""}
+
+    answer = ""
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        answer = "".join(stream_answer(query_text, sources))
+
+    set_cached(query_text, answer, sources)
     if session_id:
-        save_query(session_id, query_text, "", sources, False)
-    return result
+        save_query(session_id, query_text, answer, sources, False)
+
+    return {"query": query_text, "sources": sources, "cached": False, "answer": answer}

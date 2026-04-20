@@ -4,12 +4,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from claude_client import stream_answer
 from db import get_history, init_db
 from embedder import get_embedding
 from ingestion import SUPPORTED_EXTENSIONS, ingest_document
-from query import run_query
+from query import retrieve, run_query
 from vector_db import add_documents
 
 
@@ -62,6 +64,15 @@ async def ingest(file: UploadFile):
 @app.post("/query")
 async def query(request: QueryRequest):
     return run_query(request.query, k=request.k, alpha=request.alpha, session_id=request.session_id)
+
+
+@app.post("/query/stream")
+async def query_stream(request: QueryRequest):
+    sources = retrieve(request.query, k=request.k, alpha=request.alpha)
+    return StreamingResponse(
+        stream_answer(request.query, sources),
+        media_type="text/event-stream",
+    )
 
 
 @app.get("/history/{session_id}")

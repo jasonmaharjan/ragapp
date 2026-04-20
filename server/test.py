@@ -166,4 +166,22 @@ else:
     print("  PASS\n")
 
 
+# 8. Claude client streaming
+print("---- 8. Claude Client Streaming ----")
+from claude_client import stream_answer
+
+api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+if not api_key:
+    print("  ANTHROPIC_API_KEY not set — skipping\n")
+else:
+    test_chunks = [{"source": "test.txt", "chunk_index": 0, "text": "RAG combines retrieval with generation to reduce hallucinations.", "score": 0.9}]
+    tokens = list(stream_answer("What is RAG?", test_chunks))
+    assert len(tokens) > 0, "Expected at least one token from stream"
+    answer = "".join(tokens)
+    assert len(answer) > 10, "Expected a non-trivial answer"
+    print(f"  Streamed {len(tokens)} tokens, answer length: {len(answer)} chars")
+    print(f"  Answer preview: {answer[:80]!r}")
+    print("  PASS\n")
+
+
 print("All tests passed.")

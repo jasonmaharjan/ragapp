@@ -83,6 +83,14 @@ Run the built-in smoke test (corpus included, no external data needed):
 python scripts/eval.py
 ```
 
+## Claude answer generation
+
+After retrieval, the top-k chunks are passed to Claude as context. Claude generates a grounded answer and is instructed not to answer from outside the provided documents.
+
+Prompt caching is applied to both the system prompt and the context block. Since the system prompt never changes and the context is often reused across queries on the same document, this significantly cuts input token costs on repeated requests.
+
+The `/query` endpoint collects the full streamed answer before returning. The `/query/stream` endpoint streams tokens directly to the client as they arrive — useful for building a responsive UI.
+
 ## Conversation history
 
 Each query can be associated with a `session_id`. When provided, the query and its retrieved sources are persisted to PostgreSQL so you can retrieve the full history for a session later.
@@ -117,7 +125,8 @@ This starts the API on port 8000, Redis on 6379, and Postgres on 5432. The Postg
 
 `POST`
 - `/ingest` : Upload a document (PDF / DOCX / TXT / MD)
-- `/query` : Ask a question — returns top-k chunks with source attribution
+- `/query` : Ask a question — returns top-k chunks + generated answer
+- `/query/stream` : Same as `/query` but streams the answer as tokens arrive
 
 Optional `session_id` in the query request body saves the query to conversation history:
 
